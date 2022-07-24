@@ -3,8 +3,22 @@
   utilities for the conversion of blobs to urls, dataURLs, dataURLs or blobURLs to blobs, etc etc.
   following funcs are attached to the window object:
   
-  window.__URLToBlob(url)         input a blobURL to dataURL, returns a blob object. does not auto-revoke blob urls, you should do that manually.
-  window.__blobToDataURL(blob)    convert a blob to DataURL
+    window.__URLToBlob(url)         input a blobURL to dataURL, returns a blob object. does not auto-revoke blob urls, you should do that manually.
+    window.__blobToDataURL(blob)    convert a blob to DataURL
+
+    window.__URLToBlobAsynch(url,callback)
+    window.__blobToDataURLAsynch(blob,callback)
+  
+  the following funcs create the respective file on the fly using the provided input as a string. i like to use template strings since its easier.
+  this is convenient if you want to generate a simple html file for a popup or something, or if you wanna make a webworker without making a separate file.
+  
+    window.__createTextBlob(string)
+    window.__createHTMLBlob(stringOfHTMLCode)
+    window.__createJSBlob(stringOfJSCode)
+
+    window.__createTextDataURL(string)
+    window.__createHTMLDataURL(stringOfHTMLCode)
+    window.__createJSDataURL(stringOfJSCode)
 
 */
 
@@ -59,5 +73,52 @@ window[new Error().stack.match(location.href.match(/(.*)\//g)+"(.*?):")[1]]=()=>
     return "data:"+mimeType+";base64,"+btoa([].reduce.call(ui8,function(p,c){return p+String.fromCharCode(c)},""));
   };
   
+  
+  window.__URLToBlobAsynch=function(url,callback){
+    // works with dataURL or blobURL
+    fetch(url).then((e)=>{
+      return e.blob();
+    }).then((blob)=>{
+      callback(blob);
+    }).catch((e)=>{
+      console.error("error: invalid url. cannot fetch blob");
+      callback(null);
+    });
+  };
+  window.__blobToDataURLAsynch=function(blob,callback){
+    var f=new FileReader();
+    f.readAsDataURL(blob);
+    f.onload=(e)=>{
+      callback(e.target.result);
+    };
+  };
+  
+  
+  
+  window.__createTextBlob=function(text){
+    return new Blob([text],{type:"text/plain"});
+  };
+  window.__createHTMLBlob=function(HTMLText){
+    return new Blob([HTMLText],{type:"text/html"});
+  };
+  window.__createJSBlob=function(JSText){
+    return new Blob([JSText],{type:"text/javascript"});
+  };
+  
+  window.__createTextDataURL=function(text){
+    var blob=__createTextBlob(text);
+    var dataURL=__blobToDataURL(blob);
+    return dataURL;
+  };
+  window.__createHTMLDataURL=function(HTMLText){
+    var blob=__createHTMLBlob(HTMLText);
+    var dataURL=__blobToDataURL(blob);
+    return dataURL;
+  };
+  window.__createJSDataURL=function(JSText){
+    var blob=__createJSBlob(JSText);
+    var dataURL=__blobToDataURL(blob);
+    return dataURL;
+  };
 
 };
