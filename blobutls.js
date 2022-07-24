@@ -1,15 +1,17 @@
 /*
 
-  utilities for the conversion of blobs to urls, dataURLs, dataURLs or blobURLs to blobs, etc etc
+  utilities for the conversion of blobs to urls, dataURLs, dataURLs or blobURLs to blobs, etc etc.
+  following funcs are attached to the window object:
   
-  
+  window.__URLToBlob(url)         input a blobURL to dataURL, returns a blob object. does not auto-revoke blob urls, you should do that manually.
+  window.__blobToDataURL(blob)    convert a blob to DataURL
 
 */
 
 window[new Error().stack.match(location.href.match(/(.*)\//g)+"(.*?):")[1]]=()=>{
 
 
-  window.__URLToBlob=function(url,callback){
+  window.__URLToBlob=function(url){
     // works with dataURL or blobURL
     // note - technically xhr can also be used to load dataURLs, 
     // but i am also including another method specifically for dataURLs
@@ -42,5 +44,20 @@ window[new Error().stack.match(location.href.match(/(.*)\//g)+"(.*?):")[1]]=()=>
       return null;
     }
   };
+  
+  
+  // convert blob to url
+  window.__blobToDataURL=function(blob){
+    var mimeType=blob.type;
+    var uri=URL.createObjectURL(blob);
+    var xhr=new XMLHttpRequest();
+    xhr.overrideMimeType("text/plain; charset=x-user-defined");
+    xhr.open("GET",uri,false);
+    xhr.send();
+    URL.revokeObjectURL(uri);
+    var ui8=Uint8Array.from(xhr.response, c => c.charCodeAt(0));
+    return "data:"+mimeType+";base64,"+btoa([].reduce.call(ui8,function(p,c){return p+String.fromCharCode(c)},""));
+  };
+  
 
 };
